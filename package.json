@@ -1,0 +1,26 @@
+{
+  "name": "cli-readme-gen",
+  "version": "1.0.0",
+  "description": "generate README files using the CLI",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akarpisz/cli-readme-gen.git"
+  },
+  "keywords": [
+    "npm",
+    "cli-readme-gen"
+  ],
+  "author": "andrew a.k.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/akarpisz/cli-readme-gen/issues"
+  },
+  "homepage": "https://github.com/akarpisz/cli-readme-gen#readme",
+  "dependencies": {
+    "inquirer": "^7.1.0"
+  }
+}
