@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "generate README files using the CLI",
   "main": "index.js",
+  "bin": {
+    "gen": "./index.js"
+  },
   "scripts": {
     "test": "npm test"
   },
