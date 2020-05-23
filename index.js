@@ -99,7 +99,40 @@ const moreHeading = () => {
   ]);
   return ans;
 };
-const tocList = [];
+
+const fillTable = async () => {
+  try {
+    let cont = [];
+    
+
+    for (let i = 0; i < tocList.length; i++) {
+      let ans = await prompt([
+        {
+          name: `${tocList[i]}`,
+          message: `add content about ${tocList[i]}`,
+        },
+      ]);
+      cont.push(Object.values(ans).join(""));
+      console.log(cont);
+;      
+    }
+    
+    let done = tocList.map((value, index) => { 
+      return `${value}
+
+${cont[index]}`
+  });
+    console.log(done);
+    fs.writeFileSync("READ.md", done, "utf8", err => {return err});
+
+  }
+  catch(err) {
+    console.log(err);
+    
+  }
+};
+let tocList = [];
+
 // maybe do one function, askTOC and another, buildTOC
 //oh, and use async/await for that TOC stuff2
 
@@ -122,43 +155,47 @@ async function tableCreate() {
 }
 
 async function prepText() {
-  try{
+  try {
     let keys = Object.keys(mainAns);
     let prop = Object.values(mainAns);
     let data = "";
-    
-    for(let i=0; i< keys.length; i++){
 
+    for (let i = 0; i < keys.length; i++) {
       let line = `${keys[i]} : ${prop[i]}`;
       console.log(line);
       data += `${line} \n`;
-      
-
-      
     }
     console.log(data);
-    console.log(tocList);
-    
-
-    
-    
-    
-    
-  
-  
-}
-  catch(err) {
+  } catch (err) {
     console.log(err);
-    
   }
 }
 
+async function read() {
+  try {
+    fs.readFile("./package.json", "utf8", (err, data) => {
+      if (err) throw err;
+      data = JSON.parse(data);
+      console.log(data);
+      dep = data.dependencies;
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
 
 async function wholeThing(mainAns, tocList) {
-  await main();
-  await tableCreate();  
-  await prepText(mainAns, tocList);
-  process.exit();
+  try {
+    await main();
+    await tableCreate();
+    await fillTable(tocList);
+    await prepText(mainAns, tocList);
+    // await read();
+
+    process.exit();
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 wholeThing();
