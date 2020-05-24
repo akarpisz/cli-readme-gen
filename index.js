@@ -49,8 +49,19 @@ const questions = [
     message: "Github Email:",
   },
 ];
+
+const tableQuestion = [
+  {
+    type: "confirm",
+    name: "includeTOC",
+    message: "Include a table of contents? (Recommended)",
+  },
+];
+
 let mainAns;
 let repo;
+let tocList = [];
+const formattedTOC = [];
 
 async function main() {
   const mainQuestions = await prompt(questions);
@@ -71,13 +82,7 @@ const getRepo = () => {
     }
   });
 };
-const tableQuestion = [
-  {
-    type: "confirm",
-    name: "includeTOC",
-    message: "Include a table of contents? (Recommended)",
-  },
-];
+
 const tableHeading = () => {
   let ans = prompt([
     {
@@ -94,47 +99,51 @@ const moreHeading = () => {
       type: "confirm",
       name: "addHeadingQuestion",
       message: "Add another heading?",
-      // choices: ["Yes", "No"]
+      
     },
   ]);
   return ans;
 };
+const formatTOC = async () => {
+  let newTOCstr;
+  for(let i = 0; i < tocList.length; i++){
+    newTOCstr = `${i+1}. ${tocList[i]}` + "\n";
+    formattedTOC.push(newTOCstr);
 
+  }
+  console.log(formattedTOC);
+  
+};
 const fillTable = async () => {
   try {
     let cont = [];
-    
 
     for (let i = 0; i < tocList.length; i++) {
       let ans = await prompt([
         {
           name: `${tocList[i]}`,
-          message: `add content about ${tocList[i]}`,
+          message: `add content for ${tocList[i]}`,
         },
       ]);
       cont.push(Object.values(ans).join(""));
       console.log(cont);
-;      
     }
-    
-    let done = tocList.map((value, index) => { 
-      return `${value}
+    let done = tocList.map((value, index) => {
+      return `##${value}` + "\n" + `${cont[index]}` + "\n\n";
+    });
 
-${cont[index]}`
-  });
-    console.log(done);
-    fs.writeFileSync("READ.md", done, "utf8", err => {return err});
-
-  }
-  catch(err) {
+    fs.appendFileSync(
+      "README.md", formattedTOC.join("") +
+      done.join(""),
+      "utf8",
+      (err) => {
+        return err;
+      }
+    );
+  } catch (err) {
     console.log(err);
-    
   }
 };
-let tocList = [];
-
-// maybe do one function, askTOC and another, buildTOC
-//oh, and use async/await for that TOC stuff2
 
 async function tableCreate() {
   try {
@@ -147,7 +156,6 @@ async function tableCreate() {
         const another = await moreHeading();
         bool = another.addHeadingQuestion;
       } while (bool);
-      console.log(tocList);
     }
   } catch (err) {
     console.log(err);
@@ -165,7 +173,6 @@ async function prepText() {
       console.log(line);
       data += `${line} \n`;
     }
-    console.log(data);
   } catch (err) {
     console.log(err);
   }
@@ -188,6 +195,7 @@ async function wholeThing(mainAns, tocList) {
   try {
     await main();
     await tableCreate();
+    await formatTOC(tocList);
     await fillTable(tocList);
     await prepText(mainAns, tocList);
     // await read();
