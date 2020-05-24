@@ -41,13 +41,13 @@ const questions = [
     message: "Test Commands:",
   },
   {
-    name: "githubPic",
-    message: "Github Picture:",
-  },
-  {
     name: "githubEmail",
     message: "Github Email:",
   },
+  {
+    name: "githubPic",
+    message: "Github Picture (you can use the file path, hosted on github or elsewhere, in an html 'img' tag, as well as specify width):",
+  }
 ];
 
 const tableQuestion = [
@@ -57,9 +57,10 @@ const tableQuestion = [
     message: "Include a table of contents? (Recommended)",
   },
 ];
-
+let topData = "";
 let mainAns;
-let repo;
+// let repo;
+let contTOC= [];
 let tocList = [];
 const formattedTOC = [];
 
@@ -107,7 +108,7 @@ const moreHeading = () => {
 const formatTOC = async () => {
   let newTOCstr;
   for(let i = 0; i < tocList.length; i++){
-    newTOCstr = `${i+1}. ${tocList[i]}` + "\n";
+    newTOCstr = `${i+1}. ${tocList[i]}\n`;
     formattedTOC.push(newTOCstr);
 
   }
@@ -128,18 +129,18 @@ const fillTable = async () => {
       cont.push(Object.values(ans).join(""));
       console.log(cont);
     }
-    let done = tocList.map((value, index) => {
-      return `##${value}` + "\n" + `${cont[index]}` + "\n\n";
+     contTOC = tocList.map((value, index) => {
+      return `##${value}\n${cont[index]}\n\n`;
     });
 
-    fs.appendFileSync(
-      "README.md", formattedTOC.join("") +
-      done.join(""),
-      "utf8",
-      (err) => {
-        return err;
-      }
-    );
+    // fs.appendFileSync(
+    //   "README.md", formattedTOC.join("") +
+    //   tocDone.join(""),
+    //   "utf8",
+    //   (err) => {
+    //     return err;
+    //   }
+    // );
   } catch (err) {
     console.log(err);
   }
@@ -162,34 +163,47 @@ async function tableCreate() {
   }
 }
 
-async function prepText() {
+const prepText= async()=> {
   try {
     let keys = Object.keys(mainAns);
     let prop = Object.values(mainAns);
-    let data = "";
+    
 
     for (let i = 0; i < keys.length; i++) {
       let line = `${keys[i]} : ${prop[i]}`;
-      console.log(line);
-      data += `${line} \n`;
+      topData += `${line} \n`;
+      // if(i = keys.length -1){
+      //   topData += "\n";
+      // }
     }
   } catch (err) {
     console.log(err);
   }
 }
 
-async function read() {
-  try {
-    fs.readFile("./package.json", "utf8", (err, data) => {
-      if (err) throw err;
-      data = JSON.parse(data);
-      console.log(data);
-      dep = data.dependencies;
-    });
-  } catch (err) {
-    console.log(err);
-  }
+const writeAll = async () => {
+  // topData = `${topData} \n`;
+  
+  let finishedREADME = `${topData}\n${formattedTOC.join("")}\n${contTOC.join("")}`;
+
+  
+  fs.writeFileSync("./README.md", finishedREADME, "utf8", err => {return err})
+  console.log("finished");
+  
 }
+
+// async function read() {
+//   try {
+//     fs.readFile("./package.json", "utf8", (err, data) => {
+//       if (err) throw err;
+//       data = JSON.parse(data);
+//       console.log(data);
+//       dep = data.dependencies;
+//     });
+//   } catch (err) {
+//     console.log(err);
+//   }
+// }
 
 async function wholeThing(mainAns, tocList) {
   try {
@@ -198,7 +212,7 @@ async function wholeThing(mainAns, tocList) {
     await formatTOC(tocList);
     await fillTable(tocList);
     await prepText(mainAns, tocList);
-    // await read();
+    await writeAll();
 
     process.exit();
   } catch (err) {
