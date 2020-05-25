@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
 const { prompt } = require("inquirer");
-const { promisify } = require("util");
-const child = require("child_process");
+// const child = require("child_process");
 const fs = require("fs");
 
 const questions = [
   {
     name: "projectTitle",
-    message: "Project Title?",
+    message: "Project Title?:",
     default: "AwesomeProject",
   },
   {
@@ -24,7 +23,7 @@ const questions = [
   {
     name: "usage",
     message:
-      "Describe your project's use briefly (add longer description under a table of contents heading):",
+      "Describe your project's use briefly:",
   },
   {
     name: "license",
@@ -52,6 +51,7 @@ const tableQuestion = [
     message: "Include a table of contents? (Recommended)",
   },
 ];
+
 let topData = "";
 let mainAns;
 let contTOC = [];
@@ -67,7 +67,6 @@ const getPic = async () => {
         "Github Picture (use the file path, hosted on github or elsewhere):",
     },
   ]);
-  console.log(ans.githubPic);
   pic = `<img src="${ans.githubPic}" width="100px">`;
   // https://drive.google.com/uc?id=1Up03NU5PI9W5YcONgNuQoQF2EoN0nPAI
 };
@@ -79,83 +78,15 @@ const githubUser = async () => {
       message: "Enter your Github username:",
     },
   ]);
-
   return userName.githubUsername;
 };
 
-async function main() {
+const main = async () => {
   const mainQuestions = await prompt(questions);
   mainAns = mainQuestions;
 }
 
-const gitAdd = async () => {
-  try {
-    child.exec("git add README.md", (error, stdout, stderr) => {
-      if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-      } else if (stdout) {
-        console.log(stdout);
-        return;
-      } else if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-      }
-    });
-  } catch (err) {
-    return err;
-  }
-};
-const gitCommit = async () => {
-  try {
-    child.exec(`git commit -m "added README file"`, (error, stdout, stderr) => {
-      if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-      } else if (stdout) {
-        console.log(stdout);
-        return;
-      } else if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-      }
-    });
-  } catch (err) {
-    return err;
-  }
-};
-
-
-const gitPush = async () => {
-  try {
-    const { branch } = await prompt([
-      {
-        name: "branch",
-        message: "what branch are you pushing the readme to?:",
-      },
-    ]);
-    child.exec("git push origin" + ` ${branch}`, (error, stdout, stderr) => {
-      if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-      } else if (stdout) {
-        console.log(stdout);
-        return;
-      } else if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-      }
-    });
-  } catch (err) {
-    return err;
-  }
-};
-const gitRdone = async () => {
-  await gitAdd();
-  await gitCommit();
-  await gitPush();
-};
-const tableHeading = () => {
+const tableHeading = async () => {
   let ans = prompt([
     {
       name: "tocHeading",
@@ -165,7 +96,7 @@ const tableHeading = () => {
 
   return ans;
 };
-const moreHeading = () => {
+const moreHeading = async () => {
   let ans = prompt([
     {
       type: "confirm",
@@ -181,7 +112,6 @@ const formatTOC = async () => {
     newTOCstr = `${i + 1}. ${tocList[i]}\n`;
     formattedTOC.push(newTOCstr);
   }
-  console.log(formattedTOC);
 };
 const fillTable = async () => {
   try {
@@ -191,11 +121,10 @@ const fillTable = async () => {
       let ans = await prompt([
         {
           name: `${tocList[i]}`,
-          message: `add content for ${tocList[i]}`,
+          message: `add content for ${tocList[i]}:`,
         },
       ]);
       cont.push(Object.values(ans).join(""));
-      console.log(cont);
     }
     contTOC = tocList.map((value, index) => {
       return `##${value}\n${cont[index]}\n\n`;
@@ -205,7 +134,7 @@ const fillTable = async () => {
   }
 };
 
-async function tableCreate() {
+const tableCreate= async () => {
   try {
     const confTable = await prompt(tableQuestion);
     let bool;
@@ -231,9 +160,7 @@ const prepText = async () => {
       let line = `${keys[i]} : ${prop[i]}\n`;
       topData += `${line} \n`;
     }
-  } catch (err) {
-    console.log(err);
-  }
+  } catch (err) {return err};
 };
 
 const writeAll = async () => {
@@ -242,8 +169,7 @@ const writeAll = async () => {
   )}\n\n${contTOC.join("")}`;
 
   fs.writeFileSync("./README.md", finishedREADME, "utf8", (err) => {
-    return err;
-  });
+    return err});
   console.log("finished");
 };
 
@@ -251,7 +177,6 @@ async function wholeThing(mainAns, tocList) {
   try {
     // const userName = await githubUser();
     // console.log(userName);
-
     await main();
     await getPic();
     await tableCreate();
@@ -259,20 +184,10 @@ async function wholeThing(mainAns, tocList) {
     await fillTable(tocList);
     await prepText(mainAns, tocList);
     await writeAll();
-    await gitRdone();
     process.exit();
   } catch (err) {
-    console.log(err);
+    return err;
   }
 }
-
 wholeThing();
 
-// tableCreate();
-// inquirer.prompt(questions
-// ).then( answer => {
-//     console.log(answer);
-//     //table of contents
-//     //write file
-
-// })
