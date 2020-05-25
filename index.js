@@ -5,8 +5,6 @@ const { promisify } = require("util");
 const child = require("child_process");
 const fs = require("fs");
 
-// const promptAsync = promisify(prompt);
-
 const questions = [
   {
     name: "projectTitle",
@@ -25,7 +23,8 @@ const questions = [
   },
   {
     name: "usage",
-    message: "Describe your project's use:",
+    message:
+      "Describe your project's use briefly (add longer description under a table of contents heading):",
   },
   {
     name: "license",
@@ -44,10 +43,6 @@ const questions = [
     name: "githubEmail",
     message: "Github Email:",
   },
-  {
-    name: "githubPic",
-    message: "Github Picture (you can use the file path, hosted on github or elsewhere, in an html 'img' tag, as well as specify width):",
-  }
 ];
 
 const tableQuestion = [
@@ -59,31 +54,107 @@ const tableQuestion = [
 ];
 let topData = "";
 let mainAns;
-// let repo;
-let contTOC= [];
+let contTOC = [];
 let tocList = [];
+let pic;
 const formattedTOC = [];
+
+const getPic = async () => {
+  const ans = await prompt([
+    {
+      name: "githubPic",
+      message:
+        "Github Picture (use the file path, hosted on github or elsewhere):",
+    },
+  ]);
+  console.log(ans.githubPic);
+  pic = `<img src="${ans.githubPic}" width="100px">`;
+  // https://drive.google.com/uc?id=1Up03NU5PI9W5YcONgNuQoQF2EoN0nPAI
+};
+
+const githubUser = async () => {
+  const userName = await prompt([
+    {
+      name: "githubUsername",
+      message: "Enter your Github username:",
+    },
+  ]);
+
+  return userName.githubUsername;
+};
 
 async function main() {
   const mainQuestions = await prompt(questions);
   mainAns = mainQuestions;
 }
-const getRepo = () => {
-  child.exec("git config --get remote.origin.url", (error, stdout, stderr) => {
-    if (error) {
-      console.log(`error: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      console.log(`stderr: ${stderr}`);
-      return;
-    } else {
-      repo = stdout;
-      console.log(repo);
-    }
-  });
+
+const gitAdd = async () => {
+  try {
+    child.exec("git add README.md", (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+      } else if (stdout) {
+        console.log(stdout);
+        return;
+      } else if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+    });
+  } catch (err) {
+    return err;
+  }
+};
+const gitCommit = async () => {
+  try {
+    child.exec(`git commit -m "added README file"`, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+      } else if (stdout) {
+        console.log(stdout);
+        return;
+      } else if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+    });
+  } catch (err) {
+    return err;
+  }
 };
 
+
+const gitPush = async () => {
+  try {
+    const { branch } = await prompt([
+      {
+        name: "branch",
+        message: "what branch are you pushing the readme to?:",
+      },
+    ]);
+    child.exec("git push origin" + ` ${branch}`, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+      } else if (stdout) {
+        console.log(stdout);
+        return;
+      } else if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+    });
+  } catch (err) {
+    return err;
+  }
+};
+const gitRdone = async () => {
+  await gitAdd();
+  await gitCommit();
+  await gitPush();
+};
 const tableHeading = () => {
   let ans = prompt([
     {
@@ -100,20 +171,17 @@ const moreHeading = () => {
       type: "confirm",
       name: "addHeadingQuestion",
       message: "Add another heading?",
-      
     },
   ]);
   return ans;
 };
 const formatTOC = async () => {
   let newTOCstr;
-  for(let i = 0; i < tocList.length; i++){
-    newTOCstr = `${i+1}. ${tocList[i]}\n`;
+  for (let i = 0; i < tocList.length; i++) {
+    newTOCstr = `${i + 1}. ${tocList[i]}\n`;
     formattedTOC.push(newTOCstr);
-
   }
   console.log(formattedTOC);
-  
 };
 const fillTable = async () => {
   try {
@@ -129,18 +197,9 @@ const fillTable = async () => {
       cont.push(Object.values(ans).join(""));
       console.log(cont);
     }
-     contTOC = tocList.map((value, index) => {
+    contTOC = tocList.map((value, index) => {
       return `##${value}\n${cont[index]}\n\n`;
     });
-
-    // fs.appendFileSync(
-    //   "README.md", formattedTOC.join("") +
-    //   tocDone.join(""),
-    //   "utf8",
-    //   (err) => {
-    //     return err;
-    //   }
-    // );
   } catch (err) {
     console.log(err);
   }
@@ -163,57 +222,44 @@ async function tableCreate() {
   }
 }
 
-const prepText= async()=> {
+const prepText = async () => {
   try {
     let keys = Object.keys(mainAns);
     let prop = Object.values(mainAns);
-    
 
     for (let i = 0; i < keys.length; i++) {
-      let line = `${keys[i]} : ${prop[i]}`;
+      let line = `${keys[i]} : ${prop[i]}\n`;
       topData += `${line} \n`;
-      // if(i = keys.length -1){
-      //   topData += "\n";
-      // }
     }
   } catch (err) {
     console.log(err);
   }
-}
+};
 
 const writeAll = async () => {
-  // topData = `${topData} \n`;
-  
-  let finishedREADME = `${topData}\n${formattedTOC.join("")}\n${contTOC.join("")}`;
+  let finishedREADME = `${topData}\n\n${pic}\n\n${formattedTOC.join(
+    ""
+  )}\n\n${contTOC.join("")}`;
 
-  
-  fs.writeFileSync("./README.md", finishedREADME, "utf8", err => {return err})
+  fs.writeFileSync("./README.md", finishedREADME, "utf8", (err) => {
+    return err;
+  });
   console.log("finished");
-  
-}
-
-// async function read() {
-//   try {
-//     fs.readFile("./package.json", "utf8", (err, data) => {
-//       if (err) throw err;
-//       data = JSON.parse(data);
-//       console.log(data);
-//       dep = data.dependencies;
-//     });
-//   } catch (err) {
-//     console.log(err);
-//   }
-// }
+};
 
 async function wholeThing(mainAns, tocList) {
   try {
+    // const userName = await githubUser();
+    // console.log(userName);
+
     await main();
+    await getPic();
     await tableCreate();
     await formatTOC(tocList);
     await fillTable(tocList);
     await prepText(mainAns, tocList);
     await writeAll();
-
+    await gitRdone();
     process.exit();
   } catch (err) {
     console.log(err);
