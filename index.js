@@ -4,6 +4,8 @@ const { prompt } = require("inquirer");
 // const child = require("child_process");
 const fs = require("fs");
 
+const { makeBadge } = require('badge-maker');
+
 const questions = [
   {
     name: "projectTitle",
@@ -14,16 +16,15 @@ const questions = [
     name: "description",
     message: "Write a brief description",
     default: "A project that does stuff.",
+  },{
+    name: "version",
+    message: "version:",
+    default: "1.0.0"
   },
   {
     name: "installation",
     message: "Installation:",
     default: "npm install",
-  },
-  {
-    name: "usage",
-    message:
-      "Describe your project's use briefly:",
   },
   {
     name: "license",
@@ -51,13 +52,34 @@ const tableQuestion = [
     message: "Include a table of contents? (Recommended)",
   },
 ];
-
+let badge;
+let version;
 let topData = "";
 let mainAns;
 let contTOC = [];
 let tocList = [];
 let pic;
 const formattedTOC = [];
+
+
+
+
+const genBadge = async() => {
+  const format = {
+    label: 'version',
+    message: `${version}`,
+    color: 'green',
+  };
+
+  const svg = makeBadge(format)
+  badge = svg;
+   
+  try {
+    makeBadge();
+  } catch (err) {
+    return (err);
+  }
+}
 
 const getPic = async () => {
   const ans = await prompt([
@@ -84,6 +106,7 @@ const githubUser = async () => {
 const main = async () => {
   const mainQuestions = await prompt(questions);
   mainAns = mainQuestions;
+  version = (mainAns.version);
 }
 
 const tableHeading = async () => {
@@ -164,9 +187,7 @@ const prepText = async () => {
 };
 
 const writeAll = async () => {
-  let finishedREADME = `${topData}\n\n${pic}\n\n${formattedTOC.join(
-    ""
-  )}\n\n${contTOC.join("")}`;
+  let finishedREADME = `${badge}\n\n${topData}\n\n${pic}\n\n${formattedTOC.join("")}\n\n${contTOC.join("")}`;
 
   fs.writeFileSync("./README.md", finishedREADME, "utf8", (err) => {
     return err});
@@ -177,7 +198,10 @@ async function wholeThing(mainAns, tocList) {
   try {
     // const userName = await githubUser();
     // console.log(userName);
+
     await main();
+    await genBadge();
+    
     await getPic();
     await tableCreate();
     await formatTOC(tocList);
