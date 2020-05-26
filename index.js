@@ -4,8 +4,6 @@ const { prompt } = require("inquirer");
 // const child = require("child_process");
 const fs = require("fs");
 
-const { makeBadge } = require('badge-maker');
-
 const questions = [
   {
     name: "projectTitle",
@@ -27,8 +25,10 @@ const questions = [
     default: "npm install",
   },
   {
+    type: "list",
     name: "license",
     message: "License Type:",
+    choices: ["MIT", "GNU AGPLv3", "GNU GPLv3", "GNU LGPLv3", "Boost Software License 1.0", "Apache License 2.0", "Mozilla Public License 2.0", "none"],
     default: "MIT",
   },
   {
@@ -65,20 +65,24 @@ const formattedTOC = [];
 
 
 const genBadge = async() => {
-  const format = {
-    label: 'version',
-    message: `${version}`,
-    color: 'green',
-  };
+  try{
+    const { label, message, color} = await prompt([
+    {
+      name: "label",
+      message: "Badge label:"
+    },
+    {
+      name: "message",
+      message: "Badge message:"
+    },
+    {
+      name: "color",
+      message: "Badge color:"
+    }
+  ])
 
-  const svg = makeBadge(format)
-  badge = svg;
-   
-  try {
-    makeBadge();
-  } catch (err) {
-    return (err);
-  }
+   badge = `<img src="https://img.shields.io/badge/${label}-${message}-${color}"></img>`;
+  } catch(err){ throw err};
 }
 
 const getPic = async () => {
@@ -150,7 +154,7 @@ const fillTable = async () => {
       cont.push(Object.values(ans).join(""));
     }
     contTOC = tocList.map((value, index) => {
-      return `##${value}\n${cont[index]}\n\n`;
+      return `##${value}\n\n${cont[index]}\n\n`;
     });
   } catch (err) {
     console.log(err);
@@ -187,7 +191,7 @@ const prepText = async () => {
 };
 
 const writeAll = async () => {
-  let finishedREADME = `${badge}\n\n${topData}\n\n${pic}\n\n${formattedTOC.join("")}\n\n${contTOC.join("")}`;
+  let finishedREADME = `${badge}\n\n${topData}\n\n${pic}\n\n\n${formattedTOC.join("")}\n\n${contTOC.join("")}`;
 
   fs.writeFileSync("./README.md", finishedREADME, "utf8", (err) => {
     return err});
@@ -201,7 +205,6 @@ async function wholeThing(mainAns, tocList) {
 
     await main();
     await genBadge();
-    
     await getPic();
     await tableCreate();
     await formatTOC(tocList);
