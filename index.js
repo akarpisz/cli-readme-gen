@@ -92,9 +92,12 @@ const getPic = async () => {
       message:
         "Github Picture (use the file path, hosted on github or elsewhere):",
     },
+    {
+      name:"altText",
+      message: "Enter desired alt text for the picture"
+    }
   ]);
-  pic = `<img src="${ans.githubPic}" width="100px">`;
-  // https://drive.google.com/uc?id=1Up03NU5PI9W5YcONgNuQoQF2EoN0nPAI
+  pic = `![ans.altText](${ans.githubPic})`;
 };
 
 const githubUser = async () => {
