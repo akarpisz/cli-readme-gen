@@ -97,7 +97,7 @@ const getPic = async () => {
       message: "Enter desired alt text for the picture"
     }
   ]);
-  pic = `![ans.altText](${ans.githubPic})`;
+  pic = `![${ans.altText}](${ans.githubPic})`;
 };
 
 const githubUser = async () => {
